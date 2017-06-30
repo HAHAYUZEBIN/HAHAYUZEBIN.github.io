@@ -1,1 +1,51 @@
-<h1>hello world</h1>
+<h2>前言</h2>
+<p>Edit Distance，中文叫做编辑距离。编辑距离在文本处理等领域是一个重要的问题，以下是摘自于 <a href="http://baike.baidu.com/link?url=oyLj3uMwU0qTBnj8C8cgO4NIBT9O7fXEMk_0W1x9wK9_DdmrIPWQqmsjiyycVqfqqfBsiQ6V4hNY24r9yeq6ea" target="_blank" rel="nofollow">百度百科</a> 的定义：</p> 
+<blockquote>
+ <p>编辑距离（Edit Distance），又称 Levenshtein 距离，是指两个字串之间由一个转成另一个所需的最少编辑操作次数。许可的编辑操作包括将一个字符替换成另一个字符，插入一个字符，删除一个字符。</p> 
+</blockquote>
+<p>如果分别用R（replace），I（insert），D（delete），M（Match）代表替换、插入、删除、匹配操作，那么 <em>vintner</em> 到 <em>writers</em> 的转换过程，可以如图所示</p>
+<p><a href="https://dn-coding-net-production-pp.qbox.me/4bab8a7f-3477-4b50-a436-e76b7242ecb9.JPG" target="_blank" class="bubble-markdown-image-link" rel="nofollow"><img src="https://dn-coding-net-production-pp.qbox.me/4bab8a7f-3477-4b50-a436-e76b7242ecb9.JPG" alt="编辑距离" class="bubble-markdown-image"></a></p>
+<p>从图中可以看出，*vintner*到*writeres*的最短编辑距离为5。编辑距离问题即求解两个字符串之间的最小距离，定义函数如下：</p> 
+<pre><code>int minDistance(String word1, String word2) {
+</code></pre>
+<h2>指令式编程范式下使用动态递归求解</h2>
+<h3>状态定义</h3>
+<p>这一类问题，可以通过动态递归的方式来解决。</p> 
+<blockquote>
+ <p><strong>定义</strong> 对于两个字符串 S<sub>1</sub> 和 S<sub>2</sub>，D( i, j ) 表示两个字符子串 S<sub>1</sub>[1..i] 和 S<sub>2</sub>[1..j] 之间的最短编辑距离。</p> 
+</blockquote>
+<p>对于两个字符串,长度分别为 n 和 m ，那么 D( n，m ) 就是他们的之间的最短编辑距离，为了计算 D( n，m )需要计算所有的 D( i，j )，其中 0&lt;=i&lt;=M, 0&lt;=j&lt;=N。对于基本情况，可以得到 D（i, 0）=0, D（0, j）=0</p>
+<h3>状态转移方程及其证明</h3>
+<p>动态递归问题中，确定了初始状态以后，就需要推导出问题的状态转移方程，编辑距离问题的状态转移方程是:<br>D(i,j)= min[D(i-1,j)+1,D(i,j-1)+1,D(i-1,j-1)+t(i,j)]</p>
+<p>其中</p> 
+<pre><code>t(i,j) = S1.charAt(i) == S2.charAt(j) ? 0 : 1
+</code></pre>
+<p>以下是证明：</p> 
+<blockquote>
+ <p><strong>命题1</strong> : D( i, j )的取值，只可能为 D( i-1, j ) + 1, D( i, j - 1 )+1, D( i - 1, j - 1 ) + t ( i, j ) 这三者中的一个。</p> 
+</blockquote>
+<p>考虑把 S<sub>1</sub>[1..i] 转换到 S<sub>2</sub>[1..j] 这个过程，对于最后一步编辑，这一步的动作只可能是R,I,D,M中的一种。现假设最后一步编辑的动作是 Insert ，即表示把 S<sub>2</sub>[j] 插入到正在转化的 S<sub>1</sub> 的末尾。那么对于这个动作之前的连续的编辑动作，表示的是把 S<sub>1</sub>[1..i] 转换到 S<sub>2</sub>[1..j-1] 这个过程，这个过程的最短编辑距离根据之前的定义表示为 D(i,j-1) ,那么由此可以得出 $D( i, j ) = D( i, j - 1 ) + 1$ 。同理，对于最后一步动作是D的情况，$ D( i, j ) = D( i - 1 , j ) + 1$。而对于最后一步东西是M或者R的情况，$D( i, j ) = D( i - 1 , j - 1 ) + t ( i , j )$。结合命题1和 D( i , j )的定义，状态转移方程的正确性得正。</p>
+<p>在<a href="https://leetcode.com/problems/edit-distance/" target="_blank" rel="nofollow">LeetCode</a>上，就有一道这样的题目，以下是用上述动态规划的思路的解法，已经AC：</p> 
+<pre><code>public int minDistance(String word1, String word2) {
+        int w1length = word1.length();
+        int w2length = word2.length();
+        int[][] dp = new int[w1length+1][w2length+1];
+        for(int l = 0; l&lt;= w2length; l++ ){
+            dp[0][l] = l;
+        }
+        for(int l = 0; l&lt;= w1length; l++ ){
+            dp[l][0] = l;
+        }
+        for(int i = 1; i&lt;=w1length; i++){
+            for(int j=1; j&lt;=w2length;j++){
+                if(word1.charAt(i-1) == word2.charAt(j-1)){
+                    dp[i][j] = Math.min(dp[i-1][j-1],Math.min(dp[i-1][j]+1,dp[i][j-1]+1));
+                }else{
+                   dp[i][j] = Math.min(dp[i-1][j-1]+1,Math.min(dp[i-1][j]+1,dp[i][j-1]+1));
+
+                }
+            }
+        }
+        return dp[w1length][w2length];
+    }
+</code></pre>
